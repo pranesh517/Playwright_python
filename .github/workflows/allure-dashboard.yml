@@ -34,10 +34,8 @@ jobs:
       - name: Install Playwright browsers
         run: playwright install --with-deps chromium
 
-      # NOTE: conftest.py currently launches with headless=False, channel='chrome'.
-      # That needs a real display + Google Chrome and won't run as-is on this
-      # runner — see the CI-headless fix noted alongside this workflow before
-      # this step will pass. --clean-alluredir avoids stale results from a
+      # CI=true is set by GitHub Actions, which is what conftest.py checks to
+      # launch Chromium headless. --clean-alluredir avoids stale results from a
       # previous run being counted as duplicate/flaky test executions.
       - name: Run tests
         run: pytest --clean-alluredir
