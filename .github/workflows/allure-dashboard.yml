@@ -49,9 +49,17 @@ jobs:
           restore-keys: |
             allure-dashboard-history-${{ github.ref_name }}-
 
+      # Predicted ahead of the deploy so the traceability matrix's dashboard-url
+      # is already correct when it's generated below (deploy-pages only knows the
+      # real URL after the upload, but this repo has no custom domain, so the
+      # default project-Pages URL is exact).
+      - name: Compute Pages URL
+        id: pages-url
+        run: echo "url=https://${{ github.repository_owner }}.github.io/${GITHUB_REPOSITORY#*/}/" >> "$GITHUB_OUTPUT"
+
       - name: Generate Allure dashboard
         id: dashboard
-        uses: pranesh517/allure_dashboards@v1
+        uses: pranesh517/allure_dashboards@v2
         with:
           allure-results-path: allure-results
           history-path: dashboard-history
@@ -61,6 +69,27 @@ jobs:
         run: |
           rm -rf dashboard-history
           cp -r allure-dashboard/data dashboard-history
+
+      # This repo has no dedicated requirement/ticket id on tests, only
+      # @allure.epic("OrangeHRM") / @allure.feature("Authentication") (see
+      # tests/test_login.py) - so requirement-annotation is pointed straight at
+      # "feature" (the closer analog to a requirement) instead of a custom
+      # label. See the traceability action's README, "No dedicated requirement
+      # id? Point it at epic, feature, or story" for what that changes vs. a
+      # real requirement id. Add requirements-file: requirements.csv later if
+      # you start maintaining a master feature/requirement list - without one,
+      # coverage is measured against whichever @allure.feature values show up
+      # in this run's results.
+      - name: Generate traceability matrix
+        id: matrix
+        uses: pranesh517/allure_dashboards/traceability@v2
+        with:
+          allure-results-path: allure-results
+          output-path: allure-dashboard/traceability
+          requirement-annotation: feature
+          requirement-source: label
+          dashboard-url: ${{ steps.pages-url.outputs.url }}
+          title: HRM UI Tests — Traceability Matrix
 
       - uses: actions/upload-pages-artifact@v3
         with:
@@ -75,3 +104,4 @@ jobs:
           echo "- Pass rate: ${{ steps.dashboard.outputs.pass-rate }}%" >> "$GITHUB_STEP_SUMMARY"
           echo "- Total: ${{ steps.dashboard.outputs.total }} · Failed: ${{ steps.dashboard.outputs.failed }} · Flaky: ${{ steps.dashboard.outputs.flaky-count }}" >> "$GITHUB_STEP_SUMMARY"
           echo "- Dashboard: ${{ steps.deployment.outputs.page_url }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Traceability matrix: ${{ steps.deployment.outputs.page_url }}traceability/ (coverage ${{ steps.matrix.outputs.coverage-percent }}%, ${{ steps.matrix.outputs.covered-requirements }}/${{ steps.matrix.outputs.total-requirements }} features, ${{ steps.matrix.outputs.orphan-tests }} orphan tests)" >> "$GITHUB_STEP_SUMMARY"
