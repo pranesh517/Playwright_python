@@ -64,6 +64,7 @@ jobs:
           allure-results-path: allure-results
           history-path: dashboard-history
           dashboard-title: HRM UI Tests
+          traceability-url: ${{ steps.pages-url.outputs.url }}traceability/
 
       - name: Save dashboard history
         run: |
