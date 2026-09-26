@@ -81,11 +81,9 @@ jobs:
       # you start maintaining a master feature/requirement list - without one,
       # coverage is measured against whichever @allure.feature values show up
       # in this run's results.
-      # @main, not @v2: the step-by-step expand in the Matrix tab isn't in a
-      # tagged release yet. Switch back to @v2 once v2 is moved past it.
       - name: Generate traceability matrix
         id: matrix
-        uses: pranesh517/allure_dashboards/traceability@main
+        uses: pranesh517/allure_dashboards/traceability@v2
         with:
           allure-results-path: allure-results
           output-path: allure-dashboard/traceability
